@@ -1,0 +1,38 @@
+//////////////////////////////////////////////////////////
+// CMPUT 275 Winter 2019
+// Matthew Braun, 1497171
+// Weekly Exercise 2: Reastaurant Finder
+//////////////////////////////////////////////////////////
+
+Included Files:
+    * get_restaurant.cpp
+    * README
+    * Makefile
+
+Wiring Instructions:
+    Provided for us
+    
+Running Instructions:
+    1. Open terminal within this directory
+    2. Type the following commands:
+        make clean
+        make upload
+    3. Use the touchscreen to control the buttons
+    
+Assumptions:
+    My screen is wired in the opposite direction as most others.
+
+Notes:
+    I was given help from the lecture code made in class.
+    
+    The file "get_restaurant.cpp" contains 5 functions: setup, getRestaurant, getRestaurantFast, processTouchScreen, and main:
+
+        setup initializes the Arduino, as well as the Adafruit display with the user interface of buttons + text.
+        
+        getRestaurant reads all restaurants from the SD card, and dereferences a pointer to each one. This function was provided to us.
+        
+        getRestaurantFast does the same thing as getRestaurant, but only reads the next block of the SD card data once all the restaurants stored within the block have been read.
+
+        processTouchScreen reads the touchscreen input from the user, calculates the location pressed on the touchscreen, checks if it is on a button, and executes the correct restaurant reader to display new time of the selected reader. Part of this function was provided to us.
+        
+        main is used to initialize some low level C++ commands, as well as iterate processTouchScreen repeatedly in an infinite loop.

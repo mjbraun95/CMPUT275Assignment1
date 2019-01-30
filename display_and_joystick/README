@@ -1,0 +1,40 @@
+Names + ID:
+Matthew Braun
+1497171
+
+CMPUT 274, Fall 2018
+
+Weekly Exercise 1: Display and Joystick
+
+Included Files:
+    * Part1.cpp
+    * README
+	* Makefile
+
+Wiring Instructions:
+	Provided for us
+	
+Running Instructions:
+    1. Open terminal within this directory
+	2. Type the following commands:
+		make clean
+		make upload
+	3. Use the joystick to navigate around the map
+	
+Assumptions:
+    
+	
+Notes:
+	I was given help from a TA, as well as the lecture code made in class.
+	
+	-mapgen?
+
+    The file "joy_cursor.cpp" contains 4 functions: setup, redrawCursor, processJoystick1, and main:
+
+		setup initializes the Arduino, as well as the Adafruit display with the Edmonton map data on the SD card. This function was provided to us.
+		
+		redrawCursor prints a cursor to the screen of a chosen colour. This function was provided to us.
+		
+		processJoystick1 reads the joystick input from the user, calculates the cursor's speed based on the joystick input, erases the old cursor, and replaces it with the new cursor in its new location. Part of this function was provided to us.
+		
+		main is used to initialize some low level C++ commands, as well as iterate processJoystick1 repeatedly in an infinite loop.
