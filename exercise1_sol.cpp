@@ -46,7 +46,7 @@ lcd_image_t yegImage = { "yeg-big.lcd", LCD_WIDTH, LCD_HEIGHT };
 #define JOY_SPEED 64
 
 // the cursor position on the display, stored as the middle pixel of the cursor
-int cursorX, cursorY; 
+int cursorX, cursorY;
 
 // upper-left coordinates in the image of the middle of the map of Edmonton
 int mapCenterX = (LCD_WIDTH/2 - MAP_DISP_WIDTH/2);
@@ -105,15 +105,15 @@ void redrawCursor(int newX, int newY, int oldX, int oldY) {
 void shiftMap() {
   if (cursorX > MAP_DISP_WIDTH - CURSOR_SIZE && mapCenterX < LCD_WIDTH - MAP_DISP_WIDTH) {
     mapCenterX += MAP_DISP_WIDTH;
-    mapCenterX = constrain(mapCenterX, MAP_DISP_WIDTH, LCD_WIDTH - MAP_DISP_WIDTH);
+    mapCenterX = constrain(mapCenterX, 0, LCD_WIDTH - MAP_DISP_WIDTH);
     lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
   }
-  else if (cursorX < 0 + CURSOR_SIZE && mapCenterX > MAP_DISP_WIDTH) {
+  else if (cursorX < 0 && mapCenterX > 0) {
     mapCenterX -= MAP_DISP_WIDTH;
-    mapCenterX = constrain(mapCenterX, MAP_DISP_WIDTH, LCD_WIDTH - MAP_DISP_WIDTH);
+    mapCenterX = constrain(mapCenterX, 0, LCD_WIDTH - MAP_DISP_WIDTH);
     lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
@@ -122,15 +122,15 @@ void shiftMap() {
 
   if (cursorY > MAP_DISP_HEIGHT - CURSOR_SIZE && mapCenterY < LCD_HEIGHT - MAP_DISP_HEIGHT) {
     mapCenterY += MAP_DISP_HEIGHT;
-    mapCenterY = constrain(mapCenterY, MAP_DISP_HEIGHT, LCD_HEIGHT - MAP_DISP_HEIGHT);
+    mapCenterY = constrain(mapCenterY, 0, LCD_HEIGHT - MAP_DISP_HEIGHT);
     lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
   }
-  else if (cursorY < 0 + CURSOR_SIZE && mapCenterY > MAP_DISP_HEIGHT) {
+  else if (cursorY < 0 && mapCenterY > 0) {
     mapCenterY -= MAP_DISP_HEIGHT;
-    mapCenterY = constrain(mapCenterY, MAP_DISP_HEIGHT, LCD_HEIGHT - MAP_DISP_HEIGHT);
+    mapCenterY = constrain(mapCenterY, 0, LCD_HEIGHT - MAP_DISP_HEIGHT);
     lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
