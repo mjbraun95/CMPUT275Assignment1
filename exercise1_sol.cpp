@@ -1,8 +1,7 @@
 /*
-	One possible solution for exercise 1. You may use it freely
+  One possible solution for exercise 1. You may use it freely
   in assignment 1 (just mention you are using the provided solution
   for exercise 1).
-
   Your solution for assignment 1 does not need to exactly duplicate 
   this cursor movement speed. As long as it is natural and varies 
   with how far the joystick is pushed.
@@ -13,9 +12,9 @@
 #include <Adafruit_ILI9341.h>
 #include <SPI.h>
 #include <SD.h>
+#include <stdlib.h>
 #include <TouchScreen.h>
 #include "lcd_image.h"
-#include <math.h>
 
 #define TFT_DC 9
 #define TFT_CS 10
@@ -70,7 +69,7 @@ lcd_image_t yegImage = { "yeg-big.lcd", MAP_WIDTH, MAP_HEIGHT };
 
 #define JOY_VERT  A1 // should connect A1 to pin VRx
 #define JOY_HORIZ A0 // should connect A0 to pin VRy
-#define JOY_SEL   13
+#define JOY_SEL   2
 
 #define JOY_CENTER   512
 #define JOY_DEADZONE 64
@@ -83,59 +82,62 @@ lcd_image_t yegImage = { "yeg-big.lcd", MAP_WIDTH, MAP_HEIGHT };
 // the cursor position on the display, stored as the middle pixel of the cursor
 int cursorX, cursorY;
 
+int prevJOY_VERT = JOY_CENTER;
+
 // upper-left coordinates in the image of the middle of the map of Edmonton
 int mapCenterX = (MAP_WIDTH/2 - MAP_DISP_WIDTH/2);
 int mapCenterY = (MAP_HEIGHT/2 - MAP_DISP_HEIGHT/2);
 
 // store the info of restaurants
 struct restaurant {
-    int32_t lat;
-    int32_t lon;
-    uint8_t rating; // from 0 to 10
-    char name[55];
-    int32_t deltaLat;
-    int32_t deltaLon;
-    int32_t distanceFromCursor;
+  int32_t lat;
+  int32_t lon;
+  uint8_t rating; // from 0 to 10
+  char name[55];
 };
 
 uint32_t prevBlock = 100;
 
 restaurant restBlockFast[8];
-restaurant rest;
+
+struct RestDist {
+  uint16_t index ; // index of restaurant from 0 to NUM_RESTAURANTS -1
+  uint16_t dist ; // Manhatten distance to cursor position
+};
+
+RestDist rest_dist[NUM_RESTAURANTS];
 
 // forward declaration for drawing the cursor
 void redrawCursor(int newX, int newY, int oldX, int oldY);
 
 void setup() {
-    init();
+  init();
 
-    Serial.begin(9600);
+  Serial.begin(9600);
 
-    // not actually used in this exercise, but it's ok to leave it
+  // not actually used in this exercise, but it's ok to leave it
+  pinMode(JOY_SEL, INPUT_PULLUP);
 
-	tft.begin();
+  tft.begin();
 
-	Serial.print("Initializing SD card...");
-	if (!SD.begin(SD_CS)) {
-		Serial.println("failed! Is it inserted properly?");
-		while (true) {}
-	}
-	Serial.println("OK!");
+  Serial.print("Initializing SD card...");
+  if (!SD.begin(SD_CS)) {
+    Serial.println("failed! Is it inserted properly?");
+    while (true) {}
+  }
+  Serial.println("OK!");
 
-    // SD card initialization for raw reads
-    Serial.print("Initializing SPI communication for raw reads...");
-    if (!card.init(SPI_HALF_SPEED, SD_CS)) {
-        Serial.println("failed! Is the card inserted properly?");
-        while (true) {}
-    }
-    else {
-        Serial.println("OK!");
-    }
+  // SD card initialization for raw reads
+  Serial.print("Initializing SPI communication for raw reads...");
+  if (!card.init(SPI_HALF_SPEED, SD_CS)) {
+    Serial.println("failed! Is the card inserted properly?");
+    while (true) {}
+  }
+  else {
+    Serial.println("OK!");
+  }
 
-	tft.setRotation(3);
-
-    tft.fillScreen(ILI9341_BLACK);
-    pinMode(JOY_SEL,INPUT);
+  tft.setRotation(3);
 }
 
 // redraws the patch of edmonton over the older cursor position
@@ -239,238 +241,159 @@ void getRestaurantFast(int restIndex, restaurant* restPtr) {
 // These functions convert between x / y map position and lat / lon
 // ( and vice versa .)
 int32_t x_to_lon(int16_t x) {
-    return map(x, 0, MAP_WIDTH, LON_WEST, LON_EAST);
+  return map(x, 0, MAP_WIDTH, LON_WEST, LON_EAST);
 }
 
 int32_t y_to_lat(int16_t y) {
-    return map(y, 0, MAP_HEIGHT, LAT_NORTH, LAT_SOUTH);
+  return map(y, 0, MAP_HEIGHT, LAT_NORTH, LAT_SOUTH);
 }
 
 int16_t lon_to_x(int32_t lon) {
-    return map(lon, LON_WEST, LON_EAST, 0, MAP_WIDTH);
+  return map(lon, LON_WEST, LON_EAST, 0, MAP_WIDTH);
 }
 
 int16_t lat_to_y(int32_t lat) {
-    return map(lat, LAT_NORTH, LAT_SOUTH, 0, MAP_HEIGHT);
+  return map(lat, LAT_NORTH, LAT_SOUTH, 0, MAP_HEIGHT);
 }
 
 void tapScreen() {
-    for (int i = 0; i < NUM_RESTAURANTS - 1; i++) {
-        getRestaurantFast(i, &rest);
-        int16_t restX = lon_to_x(rest.lon);
-        if (restX > mapCenterX + 3 && restX < mapCenterX + MAP_DISP_WIDTH - 3) {
-            int16_t restY = lat_to_y(rest.lat);
-            if (restY > mapCenterY + 3 && restY < mapCenterY + MAP_DISP_HEIGHT - 3) {
-                tft.fillCircle(restX - mapCenterX - CURSOR_SIZE/2,
-                    restY - mapCenterY - CURSOR_SIZE/2,
-                    CURSOR_SIZE/2, ILI9341_BLUE);
-            }
-        }
+  restaurant rest;
+  for (int i = 0; i < NUM_RESTAURANTS; i++) {
+    getRestaurantFast(i, &rest);
+    int16_t restX = lon_to_x(rest.lon);
+    if (restX > mapCenterX + 3 && restX < mapCenterX + MAP_DISP_WIDTH - 3) {
+      int16_t restY = lat_to_y(rest.lat);
+      if (restY > mapCenterY + 3 && restY < mapCenterY + MAP_DISP_HEIGHT - 3) {
+        tft.fillCircle(restX - mapCenterX,
+        restY - mapCenterY, CURSOR_SIZE/2, ILI9341_BLUE);
+      }
     }
+  }
 }
+
 void mode0() {
-    // pinMode(JOY_SEL,INPUT);
-    // draws the centre of the Edmonton map, leaving the rightmost 48 columns black
-    lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
-                 0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
+  tft.fillScreen(ILI9341_BLACK);
 
-    // initial cursor position is the middle of the screen
-    cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
-    cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
+  // initial cursor position is the middle of the screen
+  int cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
+  int cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
 
-    // draw the initial cursor
-    redrawCursor(cursorX, cursorY, cursorX, cursorY);
-    
-    while (digitalRead(JOY_SEL) != 0) 
-    {
-        processJoystick0();
-        // Serial.print("JOY_SEL: ");
-        // Serial.println(digitalRead(JOY_SEL));
-        TSPoint touch = ts.getPoint();
-        // map the values obtained from the touch screen
-        // to the x coordinates in display
-        int16_t screen_x = map(touch.y, TS_MINY, TS_MAXY, DISPLAY_WIDTH-1, 0);
-        // a certain amount of pressure is required 
-        if (touch.z < MINPRESSURE || touch.z > MAXPRESSURE || screen_x > 272) {
-            continue; // just go to the top of the loop again
-        }
-        tapScreen();
+  // draws the centre of the Edmonton map, leaving the rightmost 48 columns black
+  lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+    0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
+
+  // draw the initial cursor
+  redrawCursor(cursorX, cursorY, cursorX, cursorY);
+
+  while (digitalRead(JOY_SEL) != LOW) {
+    processJoystick0();
+    TSPoint touch = ts.getPoint();
+    // map the values obtained from the touch screen
+    // to the x coordinates in display
+    int16_t screen_x = map(touch.y, TS_MINY, TS_MAXY, DISPLAY_WIDTH - 1, 0);
+    // a certain amount of pressure is required 
+    if (touch.z < MINPRESSURE || touch.z > MAXPRESSURE || screen_x > 272) {
+      continue; // just go to the top of the loop again
     }
+    tapScreen();
+  }
 }
 
-struct RestDist 
-{
-    uint16_t index ; // index of restaurant from 0 to NUM_RESTAURANTS -1
-    uint16_t dist ; // Manhatten distance to cursor position
-};
-
-int processJoystick1(int selectedRest) 
-{
-    if (analogRead(JOY_VERT) < 350)
-    {
-        selectedRest++;
-    }
-    else if (analogRead(JOY_VERT) > 650)
-    {
-        selectedRest--;
-    }
-    delay(10);
-    return selectedRest;
+void processJoystick1(int* selectedRest) {
+  if (analogRead(JOY_VERT) < JOY_CENTER - JOY_DEADZONE && prevJOY_VERT > JOY_CENTER - JOY_DEADZONE) {
+    *selectedRest -= 1;
+  }
+  else if (analogRead(JOY_VERT) > JOY_CENTER + JOY_DEADZONE && prevJOY_VERT < JOY_CENTER + JOY_DEADZONE) {
+    *selectedRest += 1;
+  }
+  *selectedRest = constrain(*selectedRest, 0, 29);
+  prevJOY_VERT = analogRead(JOY_VERT);
+  delay(10);
 }
 
-void isort(RestDist* A, int length) 
-{
-    int j;
-    int tempSwap;
-    for (int i = 1 ; i < length ; i++)
-    {
-        j = i;
-        while (j>0 and A[j-1].dist > A[j].dist)
-        {
-            tempSwap = A[j].index;
-            A[j].index = A[j-1].index;
-            A[j-1].index = tempSwap;
-            tempSwap = A[j].dist;
-            A[j].dist = A[j-1].dist;
-            A[j-1].dist = tempSwap;
-            j--;
-        }
-    }
+void swap(uint16_t* a, uint16_t* b) {
+  *a += *b;
+  *b = *a - *b;
+  *a -= *b;
 }
 
-RestDist getNearest30()
-{
-    Serial.println("Check0.1");
-    delay(500);
-    uint16_t cursorLon = x_to_lon(cursorX);
-    uint16_t cursorLat = y_to_lat(cursorY);
-    Serial.println("Check0.2");
-    RestDist A[NUM_RESTAURANTS]; //Declares array of Restdist structs
-    Serial.println("Check0.3");
-    for (uint16_t i = 0; i < NUM_RESTAURANTS - 1; i++) 
-    {
-        getRestaurantFast(i, &rest);
-        A[i].index = i;
-        A[i].dist = (abs(rest.lon-cursorLon) + abs(rest.lat-cursorLat)); //Assigns index and distance to each RestDist element
+void iSort(RestDist* A, int len) {
+  int i = 1;
+  while (i < len) {
+    int j = i;
+    while (j > 0 && A[j - 1].dist > A[j].dist) {
+      swap(&A[j - 1].index, &A[j].index);
+      swap(&A[j - 1].dist, &A[j].dist);
+      j--;
     }
-    isort(&A[NUM_RESTAURANTS],NUM_RESTAURANTS);
-
-    // tft.fillScreen(ILI9341_BLACK);
-    // tft.setCursor(0,0);
-    // for (int i = 0; i < 30 ; i++)
-    // {
-    //     getRestaurantFast(A[i].index, &rest);
-    //     println();
-    // }
-
-    // RestDist* nearest30[30];
-    // for (uint16_t i = 0 ; i < 30 ; i++)
-    // {
-    //     nearest30[i] = A[i];
-    // }
-    return *A;
+    i++;
+  }
 }
 
-void mode1() 
-{
+void getNearestRest() {
+  for (uint16_t i = 0; i < NUM_RESTAURANTS; i++) {
+    restaurant r;
+    getRestaurantFast(i, &r);
+    rest_dist[i].index = i;
+    rest_dist[i].dist = (abs(r.lon - x_to_lon(cursorX + mapCenterX))
+    + abs(r.lat - y_to_lat(cursorY + mapCenterY))); //Assigns index and distance to each RestDist element
+  }
+  iSort(&rest_dist[0], NUM_RESTAURANTS);
+}
 
-    // Serial.println("Check0");
-    // RestDist nearest30[NUM_RESTAURANTS] = {getNearest30()};
-    // Serial.println("Check0.1");
-    uint16_t cursorLon = x_to_lon(cursorX);
-    uint16_t cursorLat = y_to_lat(cursorY);
-    // Serial.println("Check0.2");
-    RestDist A[NUM_RESTAURANTS]; //Declares array of Restdist structs
-    // Serial.println("Check0.3");
-    for (uint16_t i = 0; i < NUM_RESTAURANTS - 1; i++) 
-    {
-        getRestaurantFast(i, &rest);
-        A[i].index = i;
-        A[i].dist = (abs(rest.lon-cursorLon) + abs(rest.lat-cursorLat)); //Assigns index and distance to each RestDist element
+void mode1() {
+  getNearestRest();
+  tft.fillScreen(0);
+  tft.setCursor(0, 0); // where the characters will be displayed
+  tft.setTextWrap(false);
+  int selectedRest = 0; // which restaurant is selected ?
+  restaurant r;
+  for (int16_t i = 0; i < 30; i ++) {
+    getRestaurantFast(rest_dist[i].index, &r);
+    if (i != selectedRest) { // not highlighted
+      // white characters on black background
+      tft.setTextColor(0xFFFF, 0x0000);
+    } 
+    else { // highlighted
+      // black characters on white background
+      tft.setTextColor(0x0000, 0xFFFF);
     }
-    isort(&A[NUM_RESTAURANTS],NUM_RESTAURANTS);
+    tft.print(r.name);
+    tft.print("\n");
+  }
+  tft.print("\n");
 
-
-
-
-    tft.fillScreen(ILI9341_BLACK);
-    // Serial.println("Check1");
-    int selectedRest = 0; // which restaurant is selected ?
+  while (digitalRead(JOY_SEL) != LOW) {
     int prevSelectedRest = selectedRest;
-    tft.setCursor(0,0); // where the characters will be displayed
-    tft.setTextWrap(false);
-    // Serial.println("Check2");
-    for (int16_t i = 0 ; i < 30 ; i++) 
-    {
-        // Serial.println("Check3");
-        getRestaurantFast(A[i].index, &rest);
-        if (i != selectedRest) 
-        { // not highlighted
-            // white characters on black background
-            tft.setTextColor(0xFFFF, 0x0000);
-        }
-        else 
-        { // highlighted
-            // black characters on white background
-            tft.setTextColor(0x0000, 0xFFFF);
-        }
-        tft.print(rest.name);
-        tft.print("\n ");
+    processJoystick1(&selectedRest);
+    if (selectedRest != prevSelectedRest) {
+      getRestaurantFast(rest_dist[prevSelectedRest].index, &r);
+      tft.setCursor(0, prevSelectedRest * 8); // where the characters will be displayed
+      // white characters on black background
+      tft.setTextColor(0xFFFF, 0x0000);
+      tft.print(r.name);
+      tft.print("\n");
+      getRestaurantFast(rest_dist[selectedRest].index, &r);
+      tft.setCursor(0, selectedRest * 8); // where the characters will be displayed
+      // black characters on white background
+      tft.setTextColor(0x0000, 0xFFFF);
+      tft.print(r.name);
+      tft.print("\n");
     }
-    Serial.println("Check4");
-    // tft.print("\n ");
-    while (digitalRead(JOY_SEL) != 0)
-    {
-        prevSelectedRest = selectedRest;
-        selectedRest = processJoystick1(selectedRest);
-        if (selectedRest - prevSelectedRest != 0)
-        {
-            tft.setCursor(0,0); // where the characters will be displayed
-            tft.setTextWrap(false);
-            for (int16_t i = 0 ; i < 30 ; i++) 
-            {
-                getRestaurantFast(A[i].index, &rest);
-                if (i != selectedRest) 
-                { // not highlighted
-                    // white characters on black background
-                    tft.setTextColor(0xFFFF, 0x0000);
-                }
-                else 
-                { // highlighted
-                    // black characters on white background
-                    tft.setTextColor(0x0000, 0xFFFF);
-                }
-                tft.print(rest.name);
-                tft.print("\n ");
-            }
-        }
-    }
+  }
+  mapCenterX = lon_to_x(r.lon) - DISPLAY_WIDTH/2;
+  mapCenterY = lat_to_y(r.lat) - DISPLAY_HEIGHT/2;
+
+  mapCenterX = constrain(mapCenterX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
+  mapCenterY = constrain(mapCenterY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
 }
 
-// template <typename T> Container<T>::Container(const T& item) 
-// { 
-//     this->item = item;
-// }
-// template <typename T> T Container<T>::getItem() const 
-// { 
-//     return item;
-// }
-
-int main() 
-{
-	setup();
-    // Serial.println("Starting mode0");
-    // mode0();
-    // mode1();
-    while (true)
-    {
-        Serial.println("Starting mode0");
-        mode0();
-        delay(500);
-        Serial.println("Starting mode1");
-        mode1();
-        delay(500);
-    }
-	Serial.end();
-	return 0;
+int main() {
+  setup();
+  while(true) {
+    mode0();
+    mode1();
+  }
+  Serial.end();
+  return 0;
 }
