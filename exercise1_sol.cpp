@@ -275,8 +275,8 @@ void mode0() {
   tft.fillScreen(ILI9341_BLACK);
 
   // initial cursor position is the middle of the screen
-  int cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
-  int cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
+  cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
+  cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
 
   // draws the centre of the Edmonton map, leaving the rightmost 48 columns black
   lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
@@ -362,6 +362,7 @@ void mode1() {
     tft.print("\n");
   }
   tft.print("\n");
+  getRestaurantFast(rest_dist[0].index, &r);
 
   while (digitalRead(JOY_SEL) != LOW) {
     int prevSelectedRest = selectedRest;
