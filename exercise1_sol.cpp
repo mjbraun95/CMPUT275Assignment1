@@ -1,10 +1,11 @@
 /*
-  One possible solution for exercise 1. You may use it freely
-  in assignment 1 (just mention you are using the provided solution
-  for exercise 1).
-  Your solution for assignment 1 does not need to exactly duplicate 
-  this cursor movement speed. As long as it is natural and varies 
-  with how far the joystick is pushed.
+  Name: Ang Li
+  ID: 1550746
+  CMPUT 275, Winter  2019
+
+  Assignment 1: Restaurant Finder Part 1
+
+  Varied form the solution for weekly exercise 1
 */
 
 #include <Arduino.h>
@@ -20,7 +21,7 @@
 #define TFT_CS 10
 #define SD_CS 6
 
-// touch screen pins, obtained from the documentaion
+// touch screen pins, obtained from the documentation
 #define YP A2  // must be an analog pin, use "An" notation!
 #define XM A3  // must be an analog pin, use "An" notation!
 #define YM  5  // can be a digital pin
@@ -84,13 +85,14 @@ lcd_image_t yegImage = { "yeg-big.lcd", MAP_WIDTH, MAP_HEIGHT };
 int  cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
 int  cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
 
+// store previous state of the JOY_VERT
 int prevJOY_VERT = JOY_CENTER;
 
 // upper-left coordinates in the image of the middle of the map of Edmonton
 int mapCenterX = (MAP_WIDTH/2 - MAP_DISP_WIDTH/2);
 int mapCenterY = (MAP_HEIGHT/2 - MAP_DISP_HEIGHT/2);
 
-// store the info of restaurants
+// store info of restaurants
 struct restaurant {
   int32_t lat;
   int32_t lon;
@@ -98,15 +100,21 @@ struct restaurant {
   char name[55];
 };
 
+// store previous block number
 uint32_t prevBlock = 100;
 
+// store an array of restaurant struct
+// for getRestaurantFast()
 restaurant restBlockFast[8];
 
+// store info of restaurants
+// smaller version of struct restaurant
 struct RestDist {
   uint16_t index ; // index of restaurant from 0 to NUM_RESTAURANTS -1
   uint16_t dist ; // Manhatten distance to cursor position
 };
 
+// store an array of rest_dist struct
 RestDist rest_dist[NUM_RESTAURANTS];
 
 // forward declaration for drawing the cursor
@@ -122,6 +130,7 @@ void setup() {
 
   tft.begin();
 
+  // SD card initialization for reading the map
   Serial.print("Initializing SD card...");
   if (!SD.begin(SD_CS)) {
     Serial.println("failed! Is it inserted properly?");
@@ -156,6 +165,7 @@ void redrawCursor(int newX, int newY, int oldX, int oldY) {
   tft.fillRect(newX, newY, CURSOR_SIZE, CURSOR_SIZE, ILI9341_RED);
 }
 
+// 
 void shiftMap() {
   if (cursorX > MAP_DISP_WIDTH - CURSOR_SIZE && mapCenterX < MAP_WIDTH - MAP_DISP_WIDTH) {
     mapCenterX += MAP_DISP_WIDTH/2;
