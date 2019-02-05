@@ -9,40 +9,68 @@
 */
 
 Included Files:
-    * exercise1_sol.cpp
+    * assign1part1.cpp
     * lcd_image.cpp
     * lcd_image.h
     * README
     * Makefile
 
 Wiring Instructions:
-    Provided for us in class
+    For Adafruit ILI9341 Breakout:
+        Board Pin <---> Arduino Pin
+        ===========================
+        GND             GND
+        Vin             5V
+        3Vo             NOT CONNECTED
+        CLK             52
+        MISO            50
+        MOSI            51
+        CS              10
+        D/C             9
+        RST             NOT CONNECTED
+        Lite            NOT CONNECTED
+        Y+              A2 (analog pin)
+        X+              4  (digital pin)
+        X-              A3 (analog pin)
+        IM0 - IM3       NOT CONNECTED (they expect a 3.3v signal, DON'T CONNECT!)
+        CCS             6
+        CD              NOT CONNECTED
+
+    For Joystick:
+        Board Pin <---> Arduino Pin
+        ===========================
+        GND             GND
+        5V              5V
+        VRX             A1
+        VRy             A0
+        SW              2
     
 Running Instructions:
     1. Open terminal within this directory
     2. Type the following commands:
-        make clean
-        make upload
+        $make clean
+        $make upload
     3. Use the joystick to navigate through the map
     4. Press the touchscreen to view nearby restaurants on the map
     5. Press the joystick button to switch list the nearest 30 restaurants
-    6. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant location.
+    6. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant 	location
 
 Notes:
+    When trying to select a res tyrant from the list, you need to pull the joystick and then release it so the highlighted text would go up/down.
     We were given help from the lecture code made in class.
     
-    The file "exercise1_sol.cpp" contains 19 functions: getNearestRest, getRestaurantFast, iSort, main, mode0, mode1, processJoystick0, processJoystick1, processTouchScreen, redrawCursor, setup, shiftMap, swap, x_to_lon, y_to_lat, lon_to_x, lat_to_y, and tapScreen:
-        getNearestRest finds the nearest restaurant using manhattan distances from the current location of the cursor on the map.
+    The file "assign1part1.cpp" contains 19 functions: getNearestRest, 	getRestaurantFast, iSort, main, mode 0, mode 1, processJoystick0, processJoystick1, processTouchScreen, redrawCursor, setup, shiftMap, swap, x_to_lon, y_to_lat, lon_to_x, lat_to_y, and tapScreen:
+        getNearestRest finds the nearest restaurant using Manhattan distances from the current location of the cursor on the map.
         
         getRestaurantFast does the same thing as getRestaurant, but only reads the next block of the SD card data once all the restaurants stored within the block have been read.
 
         iSort is an insertion sort algorithm, used to find the nearest restaurant from the cursor.
         
-        main is used to initialize some low level C++ commands, as well as iterate mode0 and mode1 repeatedly in an infinite loop.
+        main is used to initialize some low level C++ commands, as well as iterate mode 0 and mode 1 repeatedly in an infinite loop.
 
-        mode0 is the state the program loops through to navigate the Edmonton map until the joystick button is pressed.
+        mode 0 is the state the program loops through to navigate the Edmonton map until the joystick button is pressed.
 
-        mode1 is the state the program loops through to navigate the nearest restaurant selector until the joystick button is pressed.
+        mode 1 is the state the program loops through to navigate the nearest restaurant selector until the joystick button is pressed.
 
         processJoystick0 reads the joystick input from the user, calculates the cursor's speed based on the joystick input, erases the old cursor, and replaces it with the new cursor in its new location. Part of this function was provided to us.
         
@@ -50,7 +78,7 @@ Notes:
 
         processTouchScreen reads the touchscreen input from the user, calculates the location pressed on the touchscreen, checks if it is on a button, and executes the correct restaurant reader to display new time of the selected reader. Part of this function was provided to us.
 
-        redrawCursor prints a cursor to the screen of a chosen colour. This function was provided to us.
+        redrawCursor prints a cursor to the screen of a chosen color. This function was provided to us.
 
         setup initializes the Arduino, as well as the Adafruit display, with its SD card, and serial-monitor.
 
