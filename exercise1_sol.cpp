@@ -89,8 +89,8 @@ int  cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
 int prevJOY_VERT = JOY_CENTER;
 
 // upper-left coordinates in the image of the middle of the map of Edmonton
-int mapCenterX = (MAP_WIDTH/2 - MAP_DISP_WIDTH);
-int mapCenterY = (MAP_HEIGHT/2 - MAP_DISP_HEIGHT);
+int mapOriginX = MAP_WIDTH/2 - (DISPLAY_WIDTH - 48)/2;
+int mapOriginY = MAP_HEIGHT/2 - DISPLAY_HEIGHT/2;
 
 // store info of restaurants
 struct restaurant {
@@ -158,7 +158,7 @@ void redrawCursor(int newX, int newY, int oldX, int oldY) {
 
   // draw the patch of edmonton over the old cursor
   lcd_image_draw(&yegImage, &tft,
-                 mapCenterX + oldX, mapCenterY + oldY,
+                 mapOriginX + oldX, mapOriginY + oldY,
                  oldX, oldY, CURSOR_SIZE, CURSOR_SIZE);
 
   // and now draw the cursor at the new position
@@ -167,35 +167,35 @@ void redrawCursor(int newX, int newY, int oldX, int oldY) {
 
 // 
 void shiftMap() {
-  if (cursorX > MAP_DISP_WIDTH - CURSOR_SIZE && mapCenterX < MAP_WIDTH - MAP_DISP_WIDTH) {
-    mapCenterX += MAP_DISP_WIDTH/2;
-    mapCenterX = constrain(mapCenterX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
-    lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+  if (cursorX > MAP_DISP_WIDTH - CURSOR_SIZE && mapOriginX < MAP_WIDTH - MAP_DISP_WIDTH) {
+    mapOriginX += MAP_DISP_WIDTH/2;
+    mapOriginX = constrain(mapOriginX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
+    lcd_image_draw(&yegImage, &tft, mapOriginX, mapOriginY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
   }
-  else if (cursorX < 0 && mapCenterX > 0) {
-    mapCenterX -= MAP_DISP_WIDTH/2;
-    mapCenterX = constrain(mapCenterX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
-    lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+  else if (cursorX < 0 && mapOriginX > 0) {
+    mapOriginX -= MAP_DISP_WIDTH/2;
+    mapOriginX = constrain(mapOriginX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
+    lcd_image_draw(&yegImage, &tft, mapOriginX, mapOriginY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
   }
 
-  if (cursorY > MAP_DISP_HEIGHT - CURSOR_SIZE && mapCenterY < MAP_HEIGHT - MAP_DISP_HEIGHT) {
-    mapCenterY += MAP_DISP_HEIGHT/2;
-    mapCenterY = constrain(mapCenterY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
-    lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+  if (cursorY > MAP_DISP_HEIGHT - CURSOR_SIZE && mapOriginY < MAP_HEIGHT - MAP_DISP_HEIGHT) {
+    mapOriginY += MAP_DISP_HEIGHT/2;
+    mapOriginY = constrain(mapOriginY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
+    lcd_image_draw(&yegImage, &tft, mapOriginX, mapOriginY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
   }
-  else if (cursorY < 0 && mapCenterY > 0) {
-    mapCenterY -= MAP_DISP_HEIGHT/2;
-    mapCenterY = constrain(mapCenterY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
-    lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+  else if (cursorY < 0 && mapOriginY > 0) {
+    mapOriginY -= MAP_DISP_HEIGHT/2;
+    mapOriginY = constrain(mapOriginY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
+    lcd_image_draw(&yegImage, &tft, mapOriginX, mapOriginY,
                  0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
     cursorX = (DISPLAY_WIDTH - 48 - CURSOR_SIZE)/2;
     cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
@@ -273,11 +273,11 @@ void tapScreen() {
   for (int i = 0; i < NUM_RESTAURANTS; i++) {
     getRestaurantFast(i, &rest);
     int16_t restX = lon_to_x(rest.lon);
-    if (restX > mapCenterX + 3 && restX < mapCenterX + MAP_DISP_WIDTH - 3) {
+    if (restX > mapOriginX + 3 && restX < mapOriginX + MAP_DISP_WIDTH - 3) {
       int16_t restY = lat_to_y(rest.lat);
-      if (restY > mapCenterY + 3 && restY < mapCenterY + MAP_DISP_HEIGHT - 3) {
-        tft.fillCircle(restX - mapCenterX,
-        restY - mapCenterY, CURSOR_SIZE/2, ILI9341_BLUE);
+      if (restY > mapOriginY + 3 && restY < mapOriginY + MAP_DISP_HEIGHT - 3) {
+        tft.fillCircle(restX - mapOriginX,
+        restY - mapOriginY, CURSOR_SIZE/2, ILI9341_BLUE);
       }
     }
   }
@@ -287,7 +287,7 @@ void mode0() {
   tft.fillScreen(ILI9341_BLACK);
 
   // draws the centre of the Edmonton map, leaving the rightmost 48 columns black
-  lcd_image_draw(&yegImage, &tft, mapCenterX, mapCenterY,
+  lcd_image_draw(&yegImage, &tft, mapOriginX, mapOriginY,
     0, 0, MAP_DISP_WIDTH, MAP_DISP_HEIGHT);
 
   // draw the initial cursor
@@ -342,8 +342,8 @@ void getNearestRest() {
     restaurant r;
     getRestaurantFast(i, &r);
     rest_dist[i].index = i;
-    rest_dist[i].dist = abs(lon_to_x(r.lon) - (cursorX + mapCenterX + CURSOR_SIZE/2))
-     + abs(lat_to_y(r.lat) - (cursorY + mapCenterY + CURSOR_SIZE/2)); //Assigns index and distance to each RestDist element
+    rest_dist[i].dist = abs(lon_to_x(r.lon) - (cursorX + mapOriginX + CURSOR_SIZE/2))
+     + abs(lat_to_y(r.lat) - (cursorY + mapOriginY + CURSOR_SIZE/2)); //Assigns index and distance to each RestDist element
   }
   iSort(&rest_dist[0], NUM_RESTAURANTS);
 }
@@ -389,14 +389,14 @@ void mode1() {
       tft.print("\n");
     }
   }
-  mapCenterX = lon_to_x(r.lon) - MAP_DISP_WIDTH/2;
-  mapCenterY = lat_to_y(r.lat) - MAP_DISP_HEIGHT/2;
+  mapOriginX = lon_to_x(r.lon) - MAP_DISP_WIDTH/2;
+  mapOriginY = lat_to_y(r.lat) - MAP_DISP_HEIGHT/2;
 
-  mapCenterX = constrain(mapCenterX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
-  mapCenterY = constrain(mapCenterY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
+  mapOriginX = constrain(mapOriginX, 0, MAP_WIDTH - MAP_DISP_WIDTH);
+  mapOriginY = constrain(mapOriginY, 0, MAP_HEIGHT - MAP_DISP_HEIGHT);
 
-  cursorX = lon_to_x(r.lon) - mapCenterX - CURSOR_SIZE/2;
-  cursorY = lat_to_y(r.lat) - mapCenterY - CURSOR_SIZE/2;
+  cursorX = lon_to_x(r.lon) - mapOriginX - CURSOR_SIZE/2;
+  cursorY = lat_to_y(r.lat) - mapOriginY - CURSOR_SIZE/2;
 
   // constrain so the cursor does not go off of the map display window
   cursorX = constrain(cursorX, 0, MAP_DISP_WIDTH - CURSOR_SIZE);
