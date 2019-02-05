@@ -89,8 +89,8 @@ int  cursorY = (DISPLAY_HEIGHT - CURSOR_SIZE)/2;
 int prevJOY_VERT = JOY_CENTER;
 
 // upper-left coordinates in the image of the middle of the map of Edmonton
-int mapCenterX = (MAP_WIDTH/2 - MAP_DISP_WIDTH/2);
-int mapCenterY = (MAP_HEIGHT/2 - MAP_DISP_HEIGHT/2);
+int mapCenterX = (MAP_WIDTH/2 - MAP_DISP_WIDTH);
+int mapCenterY = (MAP_HEIGHT/2 - MAP_DISP_HEIGHT);
 
 // store info of restaurants
 struct restaurant {
