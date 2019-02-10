@@ -139,15 +139,15 @@ void setup() {
     // SD card initialization for reading the map
     Serial.print("Initializing SD card...");
     if (!SD.begin(SD_CS)) {
-        Serial.println("failed! Is it inserted properly?");
+        Serial.println("failed!");
         while (true) {}
     }
     Serial.println("OK!");
 
     // SD card initialization for raw reads
-    Serial.print("Initializing SPI communication for raw reads...");
+    Serial.print("Initializing SPI...");
     if (!card.init(SPI_HALF_SPEED, SD_CS)) {
-        Serial.println("failed! Is the card inserted properly?");
+        Serial.println("failed!");
         while (true) {}
     }
     else {
@@ -259,7 +259,7 @@ void getRestaurantFast(int restIndex, restaurant* restPtr) {
         // with index "restIndex"
         // store the info in a global value for later use
         while (!card.readBlock(blockNum, (uint8_t*) restBlockFast)) {
-            Serial.println("Read block failed, trying again.");
+            Serial.println("Read block failed.");
         }
         prevBlock = blockNum;
     }
@@ -437,23 +437,22 @@ void iSort(RestDist A[], int len) {
 
 // qualifiedRest = number of the restaurants that are above the minimum rating
 void getQualifiedRest() {
-    qualifiedRests = NUM_RESTAURANTS;
-    int j = 0;
+    qualifiedRests = 0;
     for (uint16_t i = 0; i < NUM_RESTAURANTS; i++) {
         restaurant r;
         getRestaurantFast(i, &r);
         // if the rating of that restaurant is below the minimum rating
         // stop fetching its info
         if (max(floor(((double) r.rating + 1)/2), 1) < minRating + 1) {
-            qualifiedRests -= 1;
             continue;
         }
-        rest_dist[j].index = j;
+        rest_dist[qualifiedRests].index = i;
         // calculate the Manhattan distance for each restaurant
-        rest_dist[j].dist = abs(lon_to_x(r.lon) - (cursorX + mapOriginX + CURSOR_SIZE/2))
+        rest_dist[qualifiedRests].dist = abs(lon_to_x(r.lon) - (cursorX + mapOriginX + CURSOR_SIZE/2))
         + abs(lat_to_y(r.lat) - (cursorY + mapOriginY + CURSOR_SIZE/2)); //Assigns index and distance to each RestDist element
-        j += 1;
+        qualifiedRests += 1;
     }
+    qualifiedRests += 1;
 }
 
 // calculates nearest restaurants from cursor
