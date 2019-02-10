@@ -443,16 +443,14 @@ void getQualifiedRest() {
         getRestaurantFast(i, &r);
         // if the rating of that restaurant is below the minimum rating
         // stop fetching its info
-        if (max(floor(((double) r.rating + 1)/2), 1) < minRating + 1) {
-            continue;
+        if (max(floor(((double) r.rating + 1)/2), 1) >= minRating + 1) {
+            rest_dist[qualifiedRests].index = i;
+            // calculate the Manhattan distance for each restaurant
+            rest_dist[qualifiedRests].dist = abs(lon_to_x(r.lon) - (cursorX + mapOriginX + CURSOR_SIZE/2))
+            + abs(lat_to_y(r.lat) - (cursorY + mapOriginY + CURSOR_SIZE/2)); //Assigns index and distance to each RestDist element
+            qualifiedRests += 1;
         }
-        rest_dist[qualifiedRests].index = i;
-        // calculate the Manhattan distance for each restaurant
-        rest_dist[qualifiedRests].dist = abs(lon_to_x(r.lon) - (cursorX + mapOriginX + CURSOR_SIZE/2))
-        + abs(lat_to_y(r.lat) - (cursorY + mapOriginY + CURSOR_SIZE/2)); //Assigns index and distance to each RestDist element
-        qualifiedRests += 1;
     }
-    qualifiedRests += 1;
 }
 
 // calculates nearest restaurants from cursor
