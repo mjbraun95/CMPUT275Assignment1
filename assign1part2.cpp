@@ -403,7 +403,6 @@ void processJoystick1(int* selectedRest) {
     else if (analogRead(JOY_VERT) > JOY_CENTER + JOY_DEADZONE && prevJOY_VERT < JOY_CENTER + JOY_DEADZONE) {
         *selectedRest += 1;
     }
-    *selectedRest = constrain(*selectedRest, 0, 29);
     // store previous state of the JOY_VERT
     prevJOY_VERT = analogRead(JOY_VERT);
     delay(10);
@@ -471,20 +470,17 @@ void getNearestRest() {
     }
 }
 
-// processes mode 1
-void mode1() {
-    tft.setTextSize(1);
-    // calculates nearest restaurants from cursor
-    getNearestRest();
+void drawList(int startRest, int highlightedRest) {
     tft.fillScreen(0);
     tft.setCursor(0, 0); // where the characters will be displayed
     tft.setTextWrap(false);
-    int selectedRest = 0; // which restaurant is selected
+
     restaurant r;
+
     // list nearest 30 restaurants
-    for (int16_t i = 0; i < 30; i ++) {
+    for (int16_t i = startRest; i < constrain(startRest + 30, 0, qualifiedRests); i ++) {
         getRestaurantFast(rest_dist[i].index, &r);
-        if (i != selectedRest) { // not highlighted
+        if (i != highlightedRest) { // not highlighted
             // white characters on black background
             tft.setTextColor(0xFFFF, 0x0000);
         } 
@@ -496,21 +492,71 @@ void mode1() {
         tft.print("\n");
     }
     tft.print("\n");
+}
+
+// processes mode 1
+void mode1() {
+    tft.setTextSize(1);
+    // calculates nearest restaurants from cursor
+    getNearestRest();
+
+    int startRest = 0;
+    drawList(startRest, 0);
+
+    int selectedRest = 0; // which restaurant is selected
+    restaurant r;
     getRestaurantFast(rest_dist[0].index, &r);
 
     while (digitalRead(JOY_SEL) != LOW) {
         // only need to redraw 2 restaurants
         int prevSelectedRest = selectedRest;
         processJoystick1(&selectedRest);
+
+        // go to next page
+        if (startRest + 30 < qualifiedRests && selectedRest > 29) {
+            startRest += 30;
+            selectedRest = 0;
+            prevSelectedRest = 0;
+            getRestaurantFast(rest_dist[startRest].index, &r);
+            drawList(startRest, startRest);
+        }
+        // in last page
+        // if try to select beyond the last restaurant, go to the first page
+        else if (startRest + 30 >= qualifiedRests && selectedRest + startRest >= qualifiedRests) {
+            startRest = 0;
+            selectedRest = 0;
+            prevSelectedRest = 0;
+            getRestaurantFast(rest_dist[startRest].index, &r);
+            drawList(startRest, startRest);
+        }
+
+        // go to previous page
+        if (startRest - 30 >= 0 && selectedRest < 0) {
+            startRest -= 30;
+            selectedRest = 29;
+            prevSelectedRest = 29;
+            getRestaurantFast(rest_dist[startRest + 29].index, &r);
+            drawList(startRest, startRest + 29);
+        }
+        // in first page
+        // if try to select beyond the first restaurant, go to the last page
+        else if (startRest - 30 < 0 && selectedRest < 0) {
+            startRest = qualifiedRests - (qualifiedRests % 30);
+            selectedRest = (qualifiedRests % 30) - 1;
+            prevSelectedRest = (qualifiedRests % 30) - 1;
+            getRestaurantFast(rest_dist[qualifiedRests - 1].index, &r);
+            drawList(startRest, qualifiedRests - 1);
+        }
+
         //prints restaurant names to screen
         if (selectedRest != prevSelectedRest) {
-            getRestaurantFast(rest_dist[prevSelectedRest].index, &r);
+            getRestaurantFast(rest_dist[prevSelectedRest + startRest].index, &r);
             tft.setCursor(0, prevSelectedRest * 8); // where the characters will be displayed
             // white characters on black background
             tft.setTextColor(0xFFFF, 0x0000);
             tft.print(r.name);
             tft.print("\n");
-            getRestaurantFast(rest_dist[selectedRest].index, &r);
+            getRestaurantFast(rest_dist[selectedRest + startRest].index, &r);
             tft.setCursor(0, selectedRest * 8); // where the characters will be displayed
             // black characters on white background
             tft.setTextColor(0x0000, 0xFFFF);
