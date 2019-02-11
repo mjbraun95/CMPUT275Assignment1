@@ -415,14 +415,6 @@ void swap(RestDist* a, RestDist* b) {
     *b = temp;
 }
 
-// insertion sort
-// at the start of each iteration i, the array A[0]...A[i − 1]
-// will be already sorted
-// the inner loop takes the next element A[i] and swaps it
-// back through the sorted array until it finds its place
-// after this, the sub array A[0]...A[i] is sorted
-// and we are ready to increment i and repeat
-
 int partition (RestDist arr[], int low, int high) 
 { 
     RestDist pivot = arr[high]; // pivot 
@@ -461,6 +453,13 @@ void qSort(RestDist arr[], int low, int high)
     } 
 } 
 
+// insertion sort
+// at the start of each iteration i, the array A[0]...A[i − 1]
+// will be already sorted
+// the inner loop takes the next element A[i] and swaps it
+// back through the sorted array until it finds its place
+// after this, the sub array A[0]...A[i] is sorted
+// and we are ready to increment i and repeat
 void iSort(RestDist A[], int len) {
     int i = 1;
     while (i < len) {
@@ -496,6 +495,7 @@ void getNearestRest(int selectedSort) {
     // sort the restaurant by its Manhattan distance
     uint32_t startTime;
     switch (selectedSort) {
+        // Quicksort case
         case 0:
             getQualifiedRest(&rest_dist[0]);
             Serial.print("Quick Sort ");
@@ -507,6 +507,7 @@ void getNearestRest(int selectedSort) {
             Serial.print(" ms\n\r");
             Serial.flush();
             break;
+        // Insertion sort case
         case 1:
             getQualifiedRest(&rest_dist[0]);
             Serial.print("Insertion Sort ");
@@ -518,6 +519,7 @@ void getNearestRest(int selectedSort) {
             Serial.print(" ms\n\r");
             Serial.flush();
             break;
+        // Both sorting algorithms case
         case 2:
             getQualifiedRest(&rest_dist[0]);
             Serial.print("Quick Sort ");
@@ -528,6 +530,7 @@ void getNearestRest(int selectedSort) {
             Serial.print(millis() - startTime);
             Serial.print(" ms\n\r");
             Serial.flush();
+            // Reloads the RestDist array so quicksort is not sorting the already sorted array
             getQualifiedRest(&rest_dist[0]);
             Serial.print("Insertion Sort ");
             Serial.print(qualifiedRests);
