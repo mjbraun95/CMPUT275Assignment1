@@ -71,7 +71,7 @@ lcd_image_t yegImage = { "yeg-big.lcd", MAP_WIDTH, MAP_HEIGHT };
 
 #define JOY_VERT  A1 // should connect A1 to pin VRx
 #define JOY_HORIZ A0 // should connect A0 to pin VRy
-#define JOY_SEL   2
+#define JOY_SEL   13
 
 #define JOY_CENTER   512
 #define JOY_DEADZONE 64
@@ -117,11 +117,11 @@ struct RestDist {
 // store an array of rest_dist struct
 RestDist rest_dist[NUM_RESTAURANTS];
 
-int minRating = 0;
+uint8_t minRating = 0;
 
-int selectedSort = 0;
+uint8_t selectedSort = 0;
 
-int qualifiedRests;
+uint16_t qualifiedRests;
 
 // forward declaration for drawing the cursor
 void redrawCursor(int newX, int newY, int oldX, int oldY);
@@ -422,20 +422,59 @@ void swap(RestDist* a, RestDist* b) {
 // back through the sorted array until it finds its place
 // after this, the sub array A[0]...A[i] is sorted
 // and we are ready to increment i and repeat
+
+int partition (RestDist arr[], int low, int high) 
+{ 
+    RestDist pivot = arr[high]; // pivot 
+    int i = (low - 1); // Index of smaller element 
+
+    for (int j = low; j <= high- 1; j++) 
+    { 
+        // If current element is smaller than or 
+        // equal to pivot 
+        if (arr[j].dist <= pivot.dist) 
+        { 
+            i++; // increment index of smaller element 
+            swap(&arr[i], &arr[j]); 
+        } 
+    } 
+    swap(&arr[i + 1], &arr[high]); 
+    return (i + 1); 
+} 
+
+/* The main function that implements QuickSort 
+arr[] --> Array to be sorted, 
+low --> Starting index, 
+high --> Ending index */
+void qSort(RestDist arr[], int low, int high) 
+{ 
+    if (low < high) 
+    { 
+        /* pi is partitioning index, arr[p] is now 
+        at right place */
+        int pi = partition(arr, low, high); 
+
+        // Separately sort elements before 
+        // partition and after partition 
+        qSort(arr, low, pi - 1); 
+        qSort(arr, pi + 1, high); 
+    } 
+} 
+
 void iSort(RestDist A[], int len) {
     int i = 1;
     while (i < len) {
         int j = i;
         while (j > 0 && A[j - 1].dist > A[j].dist) {
-        swap(&A[j - 1], &A[j]);
-        j -= 1;
+            swap(&A[j - 1], &A[j]);
+            j -= 1;
         }
         i += 1;
     }
 }
 
 // qualifiedRest = number of the restaurants that are above the minimum rating
-void getQualifiedRest() {
+void getQualifiedRest(RestDist* rest_dist) {
     qualifiedRests = 0;
     for (uint16_t i = 0; i < NUM_RESTAURANTS; i++) {
         restaurant r;
@@ -453,15 +492,47 @@ void getQualifiedRest() {
 }
 
 // calculates nearest restaurants from cursor
-void getNearestRest() {
+void getNearestRest(int selectedSort) {
     // sort the restaurant by its Manhattan distance
+    uint32_t startTime;
     switch (selectedSort) {
+        case 0:
+            getQualifiedRest(&rest_dist[0]);
+            Serial.print("Quick Sort ");
+            Serial.print(qualifiedRests);
+            Serial.print(" restaurants: ");
+            startTime = millis();
+            qSort(&rest_dist[0], 0, qualifiedRests-1);
+            Serial.print(millis() - startTime);
+            Serial.print(" ms\n\r");
+            Serial.flush();
+            break;
         case 1:
-            getQualifiedRest();
+            getQualifiedRest(&rest_dist[0]);
             Serial.print("Insertion Sort ");
             Serial.print(qualifiedRests);
             Serial.print(" restaurants: ");
-            uint32_t startTime = millis();
+            startTime = millis();
+            iSort(&rest_dist[0], qualifiedRests);
+            Serial.print(millis() - startTime);
+            Serial.print(" ms\n\r");
+            Serial.flush();
+            break;
+        case 2:
+            getQualifiedRest(&rest_dist[0]);
+            Serial.print("Quick Sort ");
+            Serial.print(qualifiedRests);
+            Serial.print(" restaurants: ");
+            startTime = millis();
+            qSort(&rest_dist[0], 0, qualifiedRests);
+            Serial.print(millis() - startTime);
+            Serial.print(" ms\n\r");
+            Serial.flush();
+            getQualifiedRest(&rest_dist[0]);
+            Serial.print("Insertion Sort ");
+            Serial.print(qualifiedRests);
+            Serial.print(" restaurants: ");
+            startTime = millis();
             iSort(&rest_dist[0], qualifiedRests);
             Serial.print(millis() - startTime);
             Serial.print(" ms\n\r");
@@ -498,7 +569,7 @@ void drawList(int startRest, int highlightedRest) {
 void mode1() {
     tft.setTextSize(1);
     // calculates nearest restaurants from cursor
-    getNearestRest();
+    getNearestRest(selectedSort);
 
     int startRest = 0;
     drawList(startRest, 0);
