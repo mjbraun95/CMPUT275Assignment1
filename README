@@ -3,13 +3,13 @@
   IDs:    1550746 1497171
   CMPUT 275, Winter  2019
 
-  Assignment 1: Restaurant Finder Part 1
+  Assignment 1: Restaurant Finder Part 2
 
-  Varied form the solution for weekly exercise 1
+  Varied from the solution for weekly exercise 1
 */
 
 Included Files:
-    * assign1part1.cpp
+    * assign1part2.cpp
     * lcd_image.cpp
     * lcd_image.h
     * README
@@ -48,44 +48,15 @@ Wiring Instructions:
 Running Instructions:
     1. Open terminal within this directory
     2. Type the following commands:
-        $make clean
-        $make upload
+        $ make clean
+        $ make upload
     3. Use the joystick to navigate through the map
-    4. Press the touchscreen to view nearby restaurants on the map
-    5. Press the joystick button to switch list the nearest 30 restaurants
-    6. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant 	location
+    4. Press the touchscreen buttons on the side to set the minimum rating threshold for the list of restaurants, as well as the method of sorting used
+    5. Press the touchscreen map to view nearby restaurants on the map
+    6. Press the joystick button to switch list the nearest 30 restaurants
+    7. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant 	location
 
 Notes:
-    When trying to select a res tyrant from the list, you need to pull the joystick and then release it so the highlighted text would go up/down.
+    When trying to select a restaurant from the list, you need to pull the joystick and then release it so the highlighted text would go up/down.
     We were given help from the lecture code made in class.
-    
-    The file "assign1part1.cpp" contains 19 functions: getNearestRest, 	getRestaurantFast, iSort, main, mode 0, mode 1, processJoystick0, processJoystick1, processTouchScreen, redrawCursor, setup, shiftMap, swap, x_to_lon, y_to_lat, lon_to_x, lat_to_y, and tapScreen:
-        getNearestRest finds the nearest restaurant using Manhattan distances from the current location of the cursor on the map.
-        
-        getRestaurantFast does the same thing as getRestaurant, but only reads the next block of the SD card data once all the restaurants stored within the block have been read.
-
-        iSort is an insertion sort algorithm, used to find the nearest restaurant from the cursor.
-        
-        main is used to initialize some low level C++ commands, as well as iterate mode 0 and mode 1 repeatedly in an infinite loop.
-
-        mode 0 is the state the program loops through to navigate the Edmonton map until the joystick button is pressed.
-
-        mode 1 is the state the program loops through to navigate the nearest restaurant selector until the joystick button is pressed.
-
-        processJoystick0 reads the joystick input from the user, calculates the cursor's speed based on the joystick input, erases the old cursor, and replaces it with the new cursor in its new location. Part of this function was provided to us.
-        
-        processJoystick1 reads the joystick input from the user, and shifts the restaurant selector accordingly.
-
-        processTouchScreen reads the touchscreen input from the user, calculates the location pressed on the touchscreen, checks if it is on a button, and executes the correct restaurant reader to display new time of the selected reader. Part of this function was provided to us.
-
-        redrawCursor prints a cursor to the screen of a chosen color. This function was provided to us.
-
-        setup initializes the Arduino, as well as the Adafruit display, with its SD card, and serial-monitor.
-
-        shiftMap pans the map of Edmonton 1/2 of the screen length over when the cursor has reached the edge of the screen.
-
-        swap swaps two elements in a RestDist array.
-
-        x_to_lon, y_to_lat, lon_to_x, and lat_to_y are functions used to convert latitude and longitude data into pixel coordinates on the display, and vice versa.
-
-        tapScreen finds all the restaurants currently displayed on the map, and prints blue dots on them.
+    Some of the restaurants in the same location will have their orders within the list switched around, due to the way we calculated our manhattan distances.
