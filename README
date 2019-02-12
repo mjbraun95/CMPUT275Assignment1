@@ -5,7 +5,7 @@
 
   Assignment 1: Restaurant Finder Part 2
 
-  Varied from the solution for weekly exercise 1
+  Modified from the solution for weekly exercise 1
 */
 
 Included Files:
@@ -52,11 +52,13 @@ Running Instructions:
         $ make upload
     3. Use the joystick to navigate through the map
     4. Press the touchscreen buttons on the side to set the minimum rating threshold for the list of restaurants, as well as the method of sorting used
-    5. Press the touchscreen map to view nearby restaurants on the map
-    6. Press the joystick button to switch list the nearest 30 restaurants
-    7. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant 	location
+    5. Press the touchscreen map to view nearby qualified restaurants on the map
+    6. Press the joystick button to list the qualified restaurants by its distance from cursor
+        The running time could be viewed by using the command
+            $ serial-mon
+    7. From there, you can use the joystick to navigate through the restaurants, and press the joystick button again to move the cursor to that restaurant location
 
 Notes:
     When trying to select a restaurant from the list, you need to pull the joystick and then release it so the highlighted text would go up/down.
     We were given help from the lecture code made in class.
-    Some of the restaurants in the same location will have their orders within the list switched around, due to the way we calculated our manhattan distances.
+    Some of the restaurants in the same location will have their orders within the list switched around, due to the way we calculated our Manhattan distances.
